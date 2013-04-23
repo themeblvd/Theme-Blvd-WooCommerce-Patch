@@ -2,7 +2,7 @@
 Contributors: themeblvd
 Tags: themeblvd, permalink, URL
 Requires at least: Theme Blvd Framework 2.1
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 
 This plugins adds basic compatibility with Theme Blvd themes and WooCommerce.
 
@@ -33,6 +33,8 @@ This plugin accomplishes a few things in order to put the primary pieces for Woo
 3. When editing a standard static page, there will now be an option under your theme's standard "Page Options" that will allow you to designate the current static page as a "WooCommerce page" -- This will allow the WooCommerce Sidebar to be applied.
 
 == Changelog ==
+
+= 1.1.0 =
 
 = 1.0.0 =
 

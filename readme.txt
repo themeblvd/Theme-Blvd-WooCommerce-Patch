@@ -36,8 +36,9 @@ This plugin accomplishes a few things in order to put the primary pieces for Woo
 
 = 1.1.0 =
 
-* Added compatibility for framework v2.2+
 * Added options for assigning custom sidebar layouts to WooCommerce pages at Appearance > Theme Options > WooCommerce.
+* Added compatibility for Theme Blvd framework v2.2+.
+* Added frontend stylesheet to tame some Bootstrap styling before WooCommerce styles (Theme Blvd framework v2.2+ only).
 
 = 1.0.0 =
 

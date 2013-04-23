@@ -1,0 +1,24 @@
+.woocommerce select,
+.woocommerce input {
+	height: auto;
+	margin: 0;
+}
+.woocommerce .radio, 
+.woocommerce .checkbox {
+	padding: 0;
+}
+.woocommerce label {
+	display: inline;
+}
+.woocommerce .summary .label {
+	background-color: transparent;
+	-webkit-border-radius: 0;
+	-moz-border-radius: 0;
+	border-radius: 0;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	line-height: inherit;
+	padding: 0;
+	text-shadow: none;
+}

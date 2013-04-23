@@ -68,6 +68,9 @@ function tb_woocommerce_init(){
 	add_filter( 'themeblvd_sidebar_layout', 'tb_woocommerce_sidebar_layout' );
 	add_filter( 'themeblvd_frontend_config', 'tb_woocommerce_sidebar_id' );
 
+	// Assets
+	add_action( 'wp_enqueue_scripts', 'tb_woocommerce_styles' );
+
 }
 add_action( 'after_setup_theme', 'tb_woocommerce_init' );
 
@@ -402,4 +405,19 @@ function tb_woocommerce_options(){
 	$desc = __('Under Appearance > Widgets, you have a specific sidebar for WooCommerce pages called "WooCommerce Sidebar". In this section, you can select sidebar layouts for specific WooCommerce pages that will determine if that sidebar shows on the right, left, or at all.', 'tb_woocommerce');
 	themeblvd_add_option_section( 'woocommerce', 'sidebar_layouts', 'Sidebar Layouts', $desc, $options );
 
+}
+
+/**
+ * CSS for WooCommerce and Theme Blvd framework to 
+ * sit decently together. 
+ *
+ * The idea here is not to add pretty styles, but 
+ * just sort of tame any Bootstrap-related styles 
+ * before getting to the woo-commerce stylesheet.
+ *
+ * @since 1.1.0
+ */
+
+function tb_woocommerce_styles(){
+	wp_enqueue_style( 'tb_woocommerce', TB_WOOCOMMERCE_PLUGIN_URI.'/tb-woocommerce.css', array('themeblvd'), TB_WOOCOMMERCE_PLUGIN_VERSION );
 }

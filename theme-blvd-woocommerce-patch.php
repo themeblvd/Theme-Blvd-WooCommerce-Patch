@@ -32,10 +32,10 @@ define( 'TB_WOOCOMMERCE_PLUGIN_URI', plugins_url( '' , __FILE__ ) );
 /**
  * Hooks for after theme has been setup.
  *
- * @since 1.0.0
+ * @since 1.1.0
  */
 
-function tb_woocommerce_hooks(){
+function tb_woocommerce_init(){
 	
 	// If no WooCommerce or Theme Blvd framework, get out of here.
 	if( ! defined( 'WOOCOMMERCE_VERSION' ) || ! defined( 'TB_FRAMEWORK_VERSION' ) )
@@ -57,8 +57,19 @@ function tb_woocommerce_hooks(){
 		add_action( 'woocommerce_after_main_content', 'tb_woocommerce_after_main_content' );
 	}
 
+	// Page Options
+	add_filter( 'themeblvd_page_meta', 'tb_woocommerce_page_options' );
+
+	// Appearance > Theme Options > WooCommerce
+	add_action( 'after_setup_theme', 'tb_woocommerce_options' );
+
+	// Sidebars
+	tb_woocommerce_register_sidebar();
+	add_filter( 'themeblvd_sidebar_layout', 'tb_woocommerce_sidebar_layout' );
+	add_filter( 'themeblvd_frontend_config', 'tb_woocommerce_sidebar_id' );
+
 }
-add_action( 'after_setup_theme', 'tb_woocommerce_hooks' );
+add_action( 'after_setup_theme', 'tb_woocommerce_init' );
 
 /**
  * Before main content
@@ -209,7 +220,6 @@ function tb_woocommerce_sidebar_layout( $sidebar_layout ){
 
 	return $sidebar_layout;
 }
-add_filter( 'themeblvd_sidebar_layout', 'tb_woocommerce_sidebar_layout' );
 
 /**
  * Force WooCommerce sidebar_right layout.
@@ -249,7 +259,6 @@ function tb_woocommerce_sidebar_id( $config ){
 	
 	return $config;
 }
-add_filter( 'themeblvd_frontend_config', 'tb_woocommerce_sidebar_id' );
 
 /**
  * Register WooCommerce Sidebar
@@ -269,7 +278,6 @@ function tb_woocommerce_register_sidebar(){
 	);
 	register_sidebar( $args );
 }
-add_action( 'plugins_loaded', 'tb_woocommerce_register_sidebar' );
 
 
 /**
@@ -293,7 +301,6 @@ function tb_woocommerce_page_options( $setup ){
 	);
 	return $setup;
 }
-add_filter( 'themeblvd_page_meta', 'tb_woocommerce_page_options' );
 
 /**
  * Add options to theme options page for selecting sidebar 
@@ -396,4 +403,3 @@ function tb_woocommerce_options(){
 	themeblvd_add_option_section( 'woocommerce', 'sidebar_layouts', 'Sidebar Layouts', $desc, $options );
 
 }
-add_action( 'after_setup_theme', 'tb_woocommerce_options' );

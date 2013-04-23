@@ -94,21 +94,21 @@ function tb_woocommerce_sidebar_layout( $sidebar_layout ){
 	
 	// Only run if WooCommerce plugin is installed
 	if( function_exists( 'is_woocommerce' ) ) {
-		
+
 		// Figure out if this a static page we need force as a WooCommerce page.
 		$force_woocommerce = false;
 		if( is_page() ) { 
-			$woocommerce_page = get_post_meta( $post->ID, '_tb_woocommerce_page', true );
+			$woocommerce_page = get_post_meta( $post->ID, '_tb_woocommerce_page', true ); // @todo Change description of custom field option
 			if( $woocommerce_page === 'true' )
 				$force_woocommerce = true;
 		}
-		
+
 		// Adjust sidebar layout if necessary.
 		if( is_woocommerce() || $force_woocommerce )
-			$sidebar_layout = 'sidebar_right';
+			$sidebar_layout = 'sidebar_right'; // @todo big if/else statement will go here with conditionals
 			
 	}
-		
+
 	return $sidebar_layout;
 }
 add_filter( 'themeblvd_sidebar_layout', 'tb_woocommerce_sidebar_layout' );
@@ -198,3 +198,106 @@ function tb_woocommerce_page_options( $setup ){
 	return $setup;
 }
 add_filter( 'themeblvd_page_meta', 'tb_woocommerce_page_options' );
+
+/**
+ * Add options to theme options page for selecting sidebar 
+ * layouts for various woocommerce pages.
+ *
+ * @since 1.1.0
+ */
+
+function tb_woocommerce_options(){
+
+	if( ! defined('TB_FRAMEWORK_VERSION') || version_compare(TB_FRAMEWORK_VERSION, '2.1.0', '<') )
+		return;
+
+	// Add new main-level tab "WooCommerce"
+	themeblvd_add_option_tab( 'woocommerce', 'WooCommerce' );
+
+	/*--------------------------------------------*/
+	/* Breadcrumbs (only for framework v2.2.1+)
+	/*--------------------------------------------*/
+
+	if( version_compare(TB_FRAMEWORK_VERSION, '2.2.0', '>') ) {
+		// ...
+	}
+
+	/*--------------------------------------------*/
+	/* Sidebar Layouts
+	/*--------------------------------------------*/
+
+	// Generate sidebar layout options
+	$sidebar_layouts = array();
+	if( is_admin() ) {
+		$layouts = themeblvd_sidebar_layouts();
+		if( isset( $layouts['full_width'] ) )
+			$sidebar_layouts['full_width'] = $layouts['full_width']['name'].' '.__('(no sidebar)', 'tb_woocommerce');
+		if( isset( $layouts['sidebar_right'] ) )
+			$sidebar_layouts['sidebar_right'] = $layouts['sidebar_right']['name'];
+		if( isset( $layouts['sidebar_left'] ) )
+			$sidebar_layouts['sidebar_left'] = $layouts['sidebar_left']['name'];
+	}
+
+	$default = array(
+	   'tb_woocommerce_layout_default' => array( 
+			'name' 		=> __( 'WooCommerce Default', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a default fallback sidebar layout for WooCommerce pages.', 'tb_woocommerce' ),
+			'id' 		=> 'tb_woocommerce_layout_default',
+			'std' 		=> 'sidebar_right',
+			'type' 		=> 'select',
+			'options' 	=> $sidebar_layouts
+		)
+	);
+
+	$sidebar_layouts = array_merge(array('default' => __('WooCommerce Default', 'tb_woocommerce')), $sidebar_layouts );
+
+	$options = array(
+		'tb_woocommerce_layout_shop' => array( 
+			'name' 		=> __( 'The main shop page and product archives', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a sidebar layout for the main shop page and product archive pages.', 'tb_woocommerce' ),
+			'id' 		=> 'tb_woocommerce_layout_shop',
+			'std' 		=> 'default',
+			'type' 		=> 'select',
+			'options' 	=> $sidebar_layouts
+		),
+		'tb_woocommerce_layout_single' => array( 
+			'name' 		=> __( 'Single product pages', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a sidebar layout for single product pages.', 'tb_woocommerce' ),
+			'id' 		=> 'tb_woocommerce_layout_single',
+			'std' 		=> 'default',
+			'type' 		=> 'select',
+			'options' 	=> $sidebar_layouts
+		),
+		'tb_woocommerce_layout_cart' => array( 
+			'name' 		=> __( 'Cart page', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a sidebar layout for the shopping cart page.', 'tb_woocommerce' ),
+			'id' 		=> 'tb_woocommerce_layout_cart',
+			'std' 		=> 'default',
+			'type' 		=> 'select',
+			'options' 	=> $sidebar_layouts
+		),
+		'tb_woocommerce_layout_checkout' => array( 
+			'name' 		=> __( 'Checkout pages', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a sidebar layout for Checkout Page, Pay Page, and Thanks page.', 'tb_woocommerce' ),
+			'id' 		=> 'tb_woocommerce_layout_checkout',
+			'std' 		=> 'default',
+			'type' 		=> 'select',
+			'options' 	=> $sidebar_layouts
+		),
+		'tb_woocommerce_layout_account' => array( 
+			'name' 		=> __( 'Customer account pages', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a sidebar layout for the customer account pages.', 'tb_woocommerce' ),
+			'id' 		=> 'tb_woocommerce_layout_account',
+			'std' 		=> 'default',
+			'type' 		=> 'select',
+			'options' 	=> $sidebar_layouts
+		)
+	);
+
+	$options = apply_filters('tb_woocommerce_sidebar_layout_options', array_merge($default, $options) );
+	
+	$desc = __('Under Appearance > Widgets, you have a specific sidebar for WooCommerce pages called "WooCommerce Sidebar". In this section, you can select sidebar layouts for specific WooCommerce pages that will determine if that sidebar shows on the right, left, or at all.', 'tb_woocommerce');
+	themeblvd_add_option_section( 'woocommerce', 'sidebar_layouts', 'Sidebar Layouts', $desc, $options );
+
+}
+add_action( 'after_setup_theme', 'tb_woocommerce_options' );

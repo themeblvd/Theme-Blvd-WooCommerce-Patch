@@ -36,14 +36,27 @@ define( 'TB_WOOCOMMERCE_PLUGIN_URI', plugins_url( '' , __FILE__ ) );
  */
 
 function tb_woocommerce_hooks(){
-	// Only move forward if this is a Theme Blvd theme.
-	if( defined( 'TB_FRAMEWORK_VERSION' ) ) {
-		remove_all_actions( 'woocommerce_before_main_content' );
-		remove_all_actions( 'woocommerce_after_main_content' );
-		remove_all_actions( 'woocommerce_sidebar' );
+	
+	// If no WooCommerce or Theme Blvd framework, get out of here.
+	if( ! defined( 'WOOCOMMERCE_VERSION' ) || ! defined( 'TB_FRAMEWORK_VERSION' ) )
+		return;
+	
+	// Remove default WooCommerce wrappers
+	remove_all_actions( 'woocommerce_before_main_content' );
+	remove_all_actions( 'woocommerce_after_main_content' );
+	remove_all_actions( 'woocommerce_sidebar' );
+
+	// Hook in wrappers based on Theme Blvd framework version.
+	if( version_compare( TB_FRAMEWORK_VERSION, '2.2.0', '<' ) ) {
+		// Theme Blvd framework v2.0-2.1
 		add_action( 'woocommerce_before_main_content', 'tb_woocommerce_hooks_before' );
 		add_action( 'woocommerce_after_main_content', 'tb_woocommerce_hooks_after' );
+	} else {
+		// Theme Blvd framework v2.2+
+		add_action( 'woocommerce_before_main_content', 'tb_woocommerce_before_main_content' );
+		add_action( 'woocommerce_after_main_content', 'tb_woocommerce_after_main_content' );
 	}
+
 }
 add_action( 'after_setup_theme', 'tb_woocommerce_hooks' );
 
@@ -61,6 +74,7 @@ function tb_woocommerce_hooks_before(){
 	echo '<div id="sidebar_layout">';
 	echo '<div class="sidebar_layout-inner">';
 	echo '<div class="grid-protection">';
+	themeblvd_sidebars( 'left' );
 	echo '<div id="content" role="main">';
 	echo '<div class="inner">';
 	echo '<div class="article-wrap">';
@@ -87,7 +101,90 @@ function tb_woocommerce_hooks_after(){
 }
 
 /**
- * Force WooCommerce sidebar_right layout.
+ * Before main content, used in Theme Blvd framework v2.2+
+ *
+ * @since 1.1.0
+ */
+
+function tb_woocommerce_before_main_content(){
+	?>
+	<div id="sidebar_layout" class="clearfix">
+		<div class="sidebar_layout-inner">
+			<div class="row-fluid grid-protection">
+
+				<?php get_sidebar( 'left' ); ?>
+				
+				<!-- CONTENT (start) -->
+	
+				<div id="content" class="<?php echo themeblvd_get_column_class('content'); ?> clearfix" role="main">
+					<div class="inner">
+						<?php themeblvd_content_top(); ?>
+						<div class="article-wrap">
+							<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+	<?php
+}
+
+/**
+ * After main content, used in Theme Blvd framework v2.2+
+ *
+ * @since 1.1.0
+ */
+
+function tb_woocommerce_after_main_content(){
+	?>
+							</article>
+						</div><!-- .article-wrap (end) -->
+					</div><!-- .inner (end) -->
+				</div><!-- #content (end) -->
+					
+				<!-- CONTENT (end) -->	
+				
+				<?php get_sidebar( 'right' ); ?>
+			
+			</div><!-- .grid-protection (end) -->
+		</div><!-- .sidebar_layout-inner (end) -->
+	</div><!-- .#sidebar_layout (end) -->
+	<?php
+}
+
+/**
+ * Get current sidebar layout for a WooCommerce page.
+ *
+ * @since 1.1.0
+ */
+
+function tb_woocommerce_get_sidebar_layout(){
+	
+	$sidebar_layout = '';
+	
+	$woo_default = themeblvd_get_option('tb_woocommerce_layout_default');
+	if( ! $woo_default )
+		$woo_default = 'sidebar_right';
+
+	if( is_woocommerce() ) {
+		if( is_product() )
+			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_single');
+		else if( is_shop() )
+			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_shop');
+		else if( is_product_category() || is_product_tag() )
+			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_archive');
+		else if( is_checkout () || is_order_received_page() )
+			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_checkout');
+		else if( is_cart() )
+			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_cart');
+		else if( is_account_page() )
+			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_account');
+	}
+	
+	if( ! $sidebar_layout || $sidebar_layout == 'default' )
+		$sidebar_layout = $woo_default;
+
+	return $sidebar_layout;
+}
+
+/**
+ * Filter sidebar layout of framework for our WooCommerce 
+ * sidebar layout.
  *
  * @since 1.0.0
  */
@@ -95,22 +192,19 @@ function tb_woocommerce_hooks_after(){
 function tb_woocommerce_sidebar_layout( $sidebar_layout ){
 	
 	global $post;
-	
+
 	// Only run if WooCommerce plugin is installed
 	if( function_exists( 'is_woocommerce' ) ) {
 
 		// Figure out if this a static page we need force as a WooCommerce page.
 		$force_woocommerce = false;
-		if( is_page() ) { 
-			$woocommerce_page = get_post_meta( $post->ID, '_tb_woocommerce_page', true ); // @todo Change description of custom field option
-			if( $woocommerce_page === 'true' )
-				$force_woocommerce = true;
-		}
+		if( is_page() && get_post_meta( $post->ID, '_tb_woocommerce_page', true ) === 'true' )
+			$force_woocommerce = true;
 
 		// Adjust sidebar layout if necessary.
 		if( is_woocommerce() || $force_woocommerce )
-			$sidebar_layout = 'sidebar_right'; // @todo big if/else statement will go here with conditionals
-			
+			$sidebar_layout = tb_woocommerce_get_sidebar_layout();
+
 	}
 
 	return $sidebar_layout;
@@ -132,11 +226,8 @@ function tb_woocommerce_sidebar_id( $config ){
 	
 		// Figure out if this a static page we need force as a WooCommerce page.
 		$force_woocommerce = false;
-		if( is_page() ) { 
-			$woocommerce_page = get_post_meta( $post->ID, '_tb_woocommerce_page', true );
-			if( $woocommerce_page === 'true' ) 
-				$force_woocommerce = true;
-		}
+		if( is_page() && get_post_meta( $post->ID, '_tb_woocommerce_page', true ) === 'true' )
+			$force_woocommerce = true;
 		
 		// Re-configure sidebar to be shown for right sidebar location if 
 		// this is a WooCommerce-forced page. 
@@ -147,8 +238,9 @@ function tb_woocommerce_sidebar_id( $config ){
 			if( ! is_active_sidebar( 'tb_woocommerce' ) )
 				$error = true;
 			
-			// Adjust config	
-			$config['sidebars']['sidebar_right'] = array(
+			// Adjust config
+			$sidebar_layout = tb_woocommerce_get_sidebar_layout();
+			$config['sidebars'][$sidebar_layout] = array(
 				'id' => 'tb_woocommerce',
 				'error' => $error
 			);
@@ -190,13 +282,13 @@ add_action( 'plugins_loaded', 'tb_woocommerce_register_sidebar' );
 function tb_woocommerce_page_options( $setup ){
 	$setup['options'][] = array(
 		'id'		=> '_tb_woocommerce_page',
-		'name' 		=> __( 'WooCommerce Page', 'tb_woocommerce' ),
-		'desc'		=> __( 'Select if this is a WooCommerce page or not. If so, the WooCommerce Sidebar will be applied along with a forced "Sidebar Right" layout. Also, make sure you haven\'t selected a page template if you\'re using this page as a WooCommerce page.', TB_GETTEXT_DOMAIN ),
+		'name' 		=> __( 'Force WooCommerce Page', 'tb_woocommerce' ),
+		'desc'		=> __( 'If you run into a situation where you need to force the WooCommerce sidebar and sidebar layout to this page, you can do so here.', 'tb_woocommerce' ),
 		'type' 		=> 'radio',
 		'std'		=> 'false',
 		'options'	=> array(
 			'false' => __( 'No, this is not a WooCommerce page.', 'tb_woocommerce' ),
-			'true' => __( 'Yes, this is a WooCommerce page.', 'tb_woocommerce' )
+			'true' => __( 'Yes, force the WooCommerce sidebar setup.', 'tb_woocommerce' )
 		)
 	);
 	return $setup;
@@ -217,14 +309,6 @@ function tb_woocommerce_options(){
 
 	// Add new main-level tab "WooCommerce"
 	themeblvd_add_option_tab( 'woocommerce', 'WooCommerce' );
-
-	/*--------------------------------------------*/
-	/* Breadcrumbs (only for framework v2.2.1+)
-	/*--------------------------------------------*/
-
-	if( version_compare(TB_FRAMEWORK_VERSION, '2.2.0', '>') ) {
-		// ...
-	}
 
 	/*--------------------------------------------*/
 	/* Sidebar Layouts
@@ -257,9 +341,17 @@ function tb_woocommerce_options(){
 
 	$options = array(
 		'tb_woocommerce_layout_shop' => array( 
-			'name' 		=> __( 'The main shop page and product archives', 'tb_woocommerce' ),
-			'desc' 		=> __( 'Select a sidebar layout for the main shop page and product archive pages.', 'tb_woocommerce' ),
+			'name' 		=> __( 'The main shop page', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a sidebar layout for the main shop page.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_shop',
+			'std' 		=> 'default',
+			'type' 		=> 'select',
+			'options' 	=> $sidebar_layouts
+		),
+		'tb_woocommerce_layout_archive' => array( 
+			'name' 		=> __( 'Product archives', 'tb_woocommerce' ),
+			'desc' 		=> __( 'Select a sidebar layout for product archive pages. For example, this would include viewing a category or tag of products.', 'tb_woocommerce' ),
+			'id' 		=> 'tb_woocommerce_layout_archive',
 			'std' 		=> 'default',
 			'type' 		=> 'select',
 			'options' 	=> $sidebar_layouts

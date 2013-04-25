@@ -12,9 +12,7 @@ This plugins adds basic [WooCommerce](http://wordpress.org/extend/plugins/woocom
 
 *DISCLAIMER: Please note that the goal of this plugin is not to add anything stylistically to WooCommerce, but just to put the pieces in place, giving you a solid, structural starting point for your WooCommerce shop running on your Theme Blvd theme.*
 
-= What does this plugin do? =
-
-This plugin does the following:
+= What does this plugin actually do? =
 
 1. Adds appropriate Theme Blvd HTML markup to wrap the main content of WooCommerce shop pages.
 2. Replaces WooCommerce pagination with Theme Blvd framework's pagination.

@@ -57,11 +57,23 @@ function tb_woocommerce_init(){
 		add_action( 'woocommerce_after_main_content', 'tb_woocommerce_after_main_content' );
 	}
 
+	// Pagination
+	if( apply_filters( 'tb_woocommerce_pagination', true ) ) {
+		remove_action( 'woocommerce_after_shop_loop', 'woocommerce_pagination' );
+		add_action( 'woocommerce_after_shop_loop', 'themeblvd_pagination' );
+	}
+
+	// Breadcrumbs
+	if( apply_filters( 'tb_woocommerce_breadcrumbs', true ) ) {
+		add_filter( 'themeblvd_pre_breadcrumb_parts', 'tb_woocommerce_breadcrumb_parts' );
+		add_action( 'wp', 'tb_woocommerce_hide_frontpage_breadcrumbs' );
+	}
+
 	// Page Options
 	add_filter( 'themeblvd_page_meta', 'tb_woocommerce_page_options' );
 
 	// Appearance > Theme Options > WooCommerce
-	add_action( 'after_setup_theme', 'tb_woocommerce_options' );
+	tb_woocommerce_options();
 
 	// Sidebars
 	tb_woocommerce_register_sidebar();
@@ -162,6 +174,40 @@ function tb_woocommerce_after_main_content(){
 }
 
 /**
+ * This function determines if the current page is ANY
+ * WooCommerce page, including our plugin's "forced" 
+ * WooCommerce page option. 
+ *
+ * Note: Using is_woocommerce() does not take into account 
+ * all of the assigned pages. 
+ *
+ * @since 1.1.0
+ */
+
+function is_tb_woocommerce(){
+
+	global $post;
+
+	// Is WooCommerce plugin even activated?
+	if( ! function_exists( 'is_woocommerce' ) )
+		return false;
+
+	// Shop page or product archives?
+	if( is_woocommerce() )
+		return true;
+
+	// One of the WooCommerce assigned pages?
+	if( is_checkout() || is_order_received_page() || is_cart() || is_account_page() )
+		return true;
+
+	// Or, is this one of our forced WooCommerce pages?
+	if( is_page() && get_post_meta( $post->ID, '_tb_woocommerce_page', true ) === 'true' )
+		return true;
+
+	return false;
+}
+
+/**
  * Get current sidebar layout for a WooCommerce page.
  *
  * @since 1.1.0
@@ -169,25 +215,36 @@ function tb_woocommerce_after_main_content(){
 
 function tb_woocommerce_get_sidebar_layout(){
 	
+	global $post;
 	$sidebar_layout = '';
 	
 	$woo_default = themeblvd_get_option('tb_woocommerce_layout_default');
 	if( ! $woo_default )
 		$woo_default = 'sidebar_right';
 
-	if( is_woocommerce() ) {
-		if( is_product() )
-			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_single');
-		else if( is_shop() )
-			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_shop');
-		else if( is_product_category() || is_product_tag() )
-			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_archive');
-		else if( is_checkout () || is_order_received_page() )
-			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_checkout');
-		else if( is_cart() )
-			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_cart');
-		else if( is_account_page() )
-			$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_account');
+	if( is_product() ) {
+		$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_single');
+	} else if( is_shop() ) {
+		$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_shop');
+	} else if( is_product_category() || is_product_tag() ) {
+		$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_archive');
+	} else if( is_page() ) {
+		
+		// Check the sidebar layout assigned to the static page
+		$page_layout = get_post_meta( $post->ID, '_tb_sidebar_layout', true );
+
+		// And only apply our WooCommerce sidebar layout if the 
+		// "default" setting is in place.
+		if( $page_layout == 'default' ) {
+			if( is_checkout () || is_order_received_page() )
+				$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_checkout');
+			else if( is_cart() )
+				$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_cart');
+			else if( is_account_page() )
+				$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_account');
+		} else {
+			$sidebar_layout = $page_layout;
+		}
 	}
 	
 	if( ! $sidebar_layout || $sidebar_layout == 'default' )
@@ -204,22 +261,9 @@ function tb_woocommerce_get_sidebar_layout(){
  */
 
 function tb_woocommerce_sidebar_layout( $sidebar_layout ){
-	
-	global $post;
 
-	// Only run if WooCommerce plugin is installed
-	if( function_exists( 'is_woocommerce' ) ) {
-
-		// Figure out if this a static page we need force as a WooCommerce page.
-		$force_woocommerce = false;
-		if( is_page() && get_post_meta( $post->ID, '_tb_woocommerce_page', true ) === 'true' )
-			$force_woocommerce = true;
-
-		// Adjust sidebar layout if necessary.
-		if( is_woocommerce() || $force_woocommerce )
-			$sidebar_layout = tb_woocommerce_get_sidebar_layout();
-
-	}
+	if( is_tb_woocommerce() )
+		$sidebar_layout = tb_woocommerce_get_sidebar_layout();
 
 	return $sidebar_layout;
 }
@@ -231,33 +275,31 @@ function tb_woocommerce_sidebar_layout( $sidebar_layout ){
  */
 
 function tb_woocommerce_sidebar_id( $config ){
-	
+
 	global $post;
-	
-	// Only run if WooCommerce plugin is installed
-	if( function_exists( 'is_woocommerce' ) ) {
-	
-		// Figure out if this a static page we need force as a WooCommerce page.
-		$force_woocommerce = false;
-		if( is_page() && get_post_meta( $post->ID, '_tb_woocommerce_page', true ) === 'true' )
-			$force_woocommerce = true;
+
+	// Re-configure sidebar to be if this is a WooCommerce page. 
+	if( is_tb_woocommerce() ) {
 		
-		// Re-configure sidebar to be shown for right sidebar location if 
-		// this is a WooCommerce-forced page. 
-		if( is_woocommerce() || $force_woocommerce ) {
-			
-			// Determine if sidebar has widgets
-			$error = false;
-			if( ! is_active_sidebar( 'tb_woocommerce' ) )
-				$error = true;
-			
-			// Adjust config
-			$sidebar_layout = tb_woocommerce_get_sidebar_layout();
-			$config['sidebars'][$sidebar_layout] = array(
-				'id' => 'tb_woocommerce',
-				'error' => $error
-			);
-		}	
+		// If the user selected a specific sidebar layout 
+		// when editing the current page, abort mission.
+		if( is_page() && get_post_meta( $post->ID, '_tb_sidebar_layout', true ) != 'default' )
+			return $config;
+
+		// This is the ID of the sidebar this plugin registers.
+		$woo_sidebar_id = apply_filters('tb_woocommerce_sidebar_id', 'tb_woocommerce');
+
+		// Determine if sidebar has widgets
+		$error = false;
+		if( ! is_active_sidebar( $woo_sidebar_id ) )
+			$error = true;
+		
+		// Adjust config
+		$sidebar_layout = tb_woocommerce_get_sidebar_layout();
+		$config['sidebars'][$sidebar_layout] = array(
+			'id' 	=> $woo_sidebar_id,
+			'error' => $error
+		);
 	}
 	
 	return $config;
@@ -279,7 +321,7 @@ function tb_woocommerce_register_sidebar(){
 		'before_title' 	=> '<h3 class="widget-title">',
 		'after_title' 	=> '</h3>'
 	);
-	register_sidebar( $args );
+	register_sidebar( apply_filters( 'tb_woocommerce_sidebar_args', $args ) );
 }
 
 
@@ -294,11 +336,11 @@ function tb_woocommerce_page_options( $setup ){
 	$setup['options'][] = array(
 		'id'		=> '_tb_woocommerce_page',
 		'name' 		=> __( 'Force WooCommerce Page', 'tb_woocommerce' ),
-		'desc'		=> __( 'If you run into a situation where you need to force the WooCommerce sidebar and sidebar layout to this page, you can do so here.', 'tb_woocommerce' ),
+		'desc'		=> __( 'If you run into a situation where you need to force the WooCommerce sidebar and sidebar layout to this page, you can do so here.<br /><br />Pages that you\'ve assigned at <em>WooCommerce > Settings > Pages</em> don\'t need to be forced.', 'tb_woocommerce' ),
 		'type' 		=> 'radio',
 		'std'		=> 'false',
 		'options'	=> array(
-			'false' => __( 'No, this is not a WooCommerce page.', 'tb_woocommerce' ),
+			'false' => __( 'No, don\'t force as a WooCommerce page.', 'tb_woocommerce' ),
 			'true' => __( 'Yes, force the WooCommerce sidebar setup.', 'tb_woocommerce' )
 		)
 	);
@@ -402,9 +444,41 @@ function tb_woocommerce_options(){
 
 	$options = apply_filters('tb_woocommerce_sidebar_layout_options', array_merge($default, $options) );
 	
-	$desc = __('Under Appearance > Widgets, you have a specific sidebar for WooCommerce pages called "WooCommerce Sidebar". In this section, you can select sidebar layouts for specific WooCommerce pages that will determine if that sidebar shows on the right, left, or at all.', 'tb_woocommerce');
+	$desc = __('Under Appearance > Widgets, you have a specific sidebar for WooCommerce pages called "WooCommerce Sidebar." In this section, you can select sidebar layouts for specific WooCommerce pages that will determine if that sidebar shows on the right, left, or at all.<br /><br />Note: In order for the settings below to be applied for cart, checkout, and customer account pages, you must have their sidebar layouts set to "Default Sidebar Layout" when editing those pages.', 'tb_woocommerce');
 	themeblvd_add_option_section( 'woocommerce', 'sidebar_layouts', 'Sidebar Layouts', $desc, $options );
 
+	/*--------------------------------------------*/
+	/* Breadcrumbs
+	/*--------------------------------------------*/
+
+	if( version_compare(TB_FRAMEWORK_VERSION, '2.2.0', '>=' ) ) {
+
+		$options = array(
+			'tb_woocommerce_breadcrumb_shop' => array( 
+				'name' 		=> __( 'Shop link display', 'tb_woocommerce' ),
+				'desc' 		=> __( 'Select the scenarios where you\'d like a link to the main shop page inserted into the Breadcrumb trail.<br /><br />This option won\'t have any effect if you\'ve set your shop page as a static frontpage under <em>Settings > Reading > Frontpage displays</em>.<br /><br />Note: The main shop page is set from <em>WooCommerce > Settings > Pages</em>.', 'tb_woocommerce' ),
+				'id' 		=> 'tb_woocommerce_breadcrumb_shop',
+				'type' 		=> 'multicheck',
+				'std' 		=> array(
+					'archives'	=> true, 
+					'single'	=> true, 
+					'cart'		=> true, 
+					'checkout'	=> true, 
+					'account'	=> true,
+					'forced'	=> true
+				),
+				'options' 	=> array(
+					'archives' 	=> __('Product archives', 'tb_woocommerce'),
+					'single' 	=> __('Single product pages', 'tb_woocommerce'),
+					'cart' 		=> __('Cart page', 'tb_woocommerce'),
+					'checkout' 	=> __('Checkout pages', 'tb_woocommerce'),
+					'account' 	=> __('Customer account pages', 'tb_woocommerce'),
+					'forced' 	=> __('Forced WooCommerce pages', 'tb_woocommerce')
+				)
+			)
+		);
+		themeblvd_add_option_section( 'woocommerce', 'breadcrumbs', 'Breadcrumbs', '', apply_filters('tb_woocommerce_sidebar_layout_options', $options ) );
+	}
 }
 
 /**
@@ -418,6 +492,206 @@ function tb_woocommerce_options(){
  * @since 1.1.0
  */
 
-function tb_woocommerce_styles(){
+function tb_woocommerce_styles() {
 	wp_enqueue_style( 'tb_woocommerce', TB_WOOCOMMERCE_PLUGIN_URI.'/tb-woocommerce.css', array('themeblvd'), TB_WOOCOMMERCE_PLUGIN_VERSION );
+}
+
+/**
+ * Hide breadcrumbs on main shop page when it's set 
+ * as a static frontpage.
+ *
+ * This is needed because WooCommerce takes over the main 
+ * query. So, our standard option on that page for hiding 
+ * breadcrumbs won't work, as it's no longer "the page".
+ *
+ * @since 1.1.0
+ */
+
+function tb_woocommerce_hide_frontpage_breadcrumbs() {
+	if( is_post_type_archive('product') && get_option('page_on_front') === woocommerce_get_page_id('shop') )
+		remove_all_actions( 'themeblvd_breadcrumbs' );
+}
+
+/**
+ * Add breacrumb parts to Theme Blvd breadcrumbs 
+ * based on WooCommerce pages.
+ *
+ * @since 1.1.0
+ */
+
+function tb_woocommerce_breadcrumb_parts( $parts ) {
+	
+	global $post;
+	global $wp_query;
+
+	// Get out of here, everyone else.
+	if( ! is_tb_woocommerce() )
+		return $parts;
+
+	// Set shop name
+	$shop_name = woocommerce_get_page_id( 'shop' ) ? get_the_title( woocommerce_get_page_id( 'shop' ) ) : '';
+	$shop_link = array(
+		'link' 	=> get_post_type_archive_link('product'),
+		'text' 	=> $shop_name,
+		'type'	=> 'shop'
+	);
+
+	// Show shop link in trail?
+	if( woocommerce_get_page_id('shop') && get_option('page_on_front') === woocommerce_get_page_id('shop') ) {
+		$show_shop_link = array(
+			'archives'	=> false,
+			'single'	=> false,
+			'cart'		=> false,
+			'checkout'	=> false,
+			'account'	=> false,
+			'forced'	=> false
+		);
+	} else {
+		$show_shop_link = themeblvd_get_option('tb_woocommerce_breadcrumb_shop');
+	}
+
+	// Shop page, product archives, and single products
+	if( is_woocommerce() ) {
+		
+		$parts = array(); // Reset $parts
+
+		if( is_product_category() ) {
+			
+			if( $show_shop_link['archives'] )
+				$parts[] = $shop_link;
+
+			$term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) );
+
+			$parents = array();
+			$parent = $term->parent;
+			while( $parent ) {
+				$parents[] = $parent;
+				$new_parent = get_term_by( 'id', $parent, get_query_var( 'taxonomy' ) );
+				$parent = $new_parent->parent;
+			}
+
+			if( ! empty( $parents ) ) {
+				$parents = array_reverse( $parents );
+				foreach ( $parents as $parent ) {
+					$item = get_term_by( 'id', $parent, get_query_var( 'taxonomy' ));
+					$parts[] = array(
+						'link' 	=> get_term_link( $item->slug, 'product_cat' ),
+						'text' 	=> esc_html( $item->name ),
+						'type'	=> 'product-cat'
+					);
+				}
+			}
+
+			$queried_object = $wp_query->get_queried_object();
+			$parts[] = array(
+				'link' 	=> '',
+				'text' 	=> esc_html( $queried_object->name ),
+				'type'	=> 'product-cat'
+			);
+
+		} else if( is_product_tag() ) {
+			
+			if( $show_shop_link['archives'] )
+				$parts[] = $shop_link;
+
+			$queried_object = $wp_query->get_queried_object();
+			$parts[] = array(
+				'link' 	=> '',
+				'text' 	=> sprintf(__( 'Products tagged &ldquo;%s&rdquo;', 'tb_woocommerce' ), $queried_object->name),
+				'type'	=> 'product-tag'
+			);
+
+		} else if( is_post_type_archive('product') ) {
+
+			if( is_search() ) {
+				$parts[] = $shop_link;
+				$parts[] = array(
+					'link' 	=> '',
+					'text' 	=> themeblvd_get_local('crumb_search').' "'.get_search_query().'"',
+					'type'	=> 'search'
+				);
+			} else {
+				$parts[] = array(
+					'link' 	=> '',
+					'text' 	=> $shop_name,
+					'type'	=> 'shop'
+				);
+			}
+
+		} else if( is_product() ) {
+
+			if( $show_shop_link['single'] )
+				$parts[] = $shop_link;
+
+			if( $terms = wp_get_object_terms( $post->ID, 'product_cat' ) ) {
+
+				$term = current( $terms );
+				$parents = array();
+				$parent = $term->parent;
+
+				while( $parent ) {
+					$parents[] = $parent;
+					$new_parent = get_term_by( 'id', $parent, 'product_cat' );
+					$parent = $new_parent->parent;
+				}
+
+				if( ! empty( $parents ) ) {
+					$parents = array_reverse($parents);
+					foreach( $parents as $parent ) {
+						$item = get_term_by( 'id', $parent, 'product_cat');
+						$parts[] = array(
+							'link' 	=> get_term_link( $item->slug, 'product_cat' ),
+							'text' 	=> $item->name,
+							'type'	=> 'product-cat'
+						);
+					}
+				}
+
+				$parts[] = array(
+					'link' 	=> get_term_link( $term->slug, 'product_cat' ),
+					'text' 	=> $term->name,
+					'type'	=> 'product-cat'
+				);
+			}
+
+			$parts[] = array(
+				'link' 	=> '',
+				'text' 	=> get_the_title(),
+				'type'	=> 'product'
+			);
+		}		
+	}
+
+	// Cart, checkout, account, and forced WooCommerce pages
+	if( is_page() ) {
+
+		// Shop link added before page hierarchy
+		$new_parts = array();
+		if( is_checkout() || is_order_received_page() ) {
+			if( $show_shop_link['checkout'] )
+				$new_parts[] = $shop_link;
+		} else if( is_cart() ) {
+			if( $show_shop_link['cart'] )
+				$new_parts[] = $shop_link;
+		} else if( is_account_page() ) {
+			if( $show_shop_link['account'] )
+				$new_parts[] = $shop_link;
+		} else {
+			if( $show_shop_link['forced'] )
+				$new_parts[] = $shop_link;
+		}
+
+		// Merge shop link to original parts. No need to re-do 
+		// the work for figuring Pages breadcrumb trail again 
+		// when the framework already did it.
+		$parts = array_merge( $new_parts, $parts );
+	}
+
+	// Add page number if is paged
+	if( get_query_var('paged') ) {
+		$last = count($parts) - 1;
+		$parts[$last]['text'] .= ' ('.themeblvd_get_local('page').' '.get_query_var('paged').')';
+	}
+
+	return $parts;
 }

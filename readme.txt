@@ -2,7 +2,7 @@
 Contributors: themeblvd
 Tags: themeblvd, woocommerce, woo, cart, ecommerce
 Requires at least: Theme Blvd Framework 2.1
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 
 This plugins adds basic compatibility with Theme Blvd themes and WooCommerce.
 
@@ -32,11 +32,13 @@ After installing, you'll have a new panel of options added at *Appearance > Them
 == Screenshots ==
 
 1. Here's an example of some WooCommerce's sample content being displayed with the plugin and [Alyeska](http://themeforest.net/item/alyeska-responsive-wordpress-theme/164366?ref=themeblvd "Alyeska WordPress Theme").
-2. After installing this plugin, you should see a new widget area added above all of your Theme Blvd widget areas called "WooCommerce Sidebar" -- Put all of your widgets here for WooCommerce-related pages. 
+2. After installing this plugin, you should see a new widget area added above all of your Theme Blvd widget areas called "WooCommerce Sidebar" -- Put all of your widgets here for WooCommerce-related pages.
 3. When editing a standard static page, there will now be an option under your theme's standard "Page Options" that will allow you to "force" the current static page as a "WooCommerce page" -- This will allow the WooCommerce Sidebar to be applied. Note that you don't need to do this for pages you've already set in your WooCommerce settings (i.e. cart, checkout, and account pages).
 4. This is the panel that gets added to your Theme Options page for determining the sidebar layout on various WooCommerce pages.
 
 == Changelog ==
+
+= 1.1.1 =
 
 = 1.1.0 =
 

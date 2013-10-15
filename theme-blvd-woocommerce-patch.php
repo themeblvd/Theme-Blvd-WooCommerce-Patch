@@ -2,7 +2,7 @@
 /*
 Plugin Name: Theme Blvd WooCommerce Patch
 Description: This plugins adds basic compatibility with Theme Blvd themes and WooCommerce.
-Version: 1.1.0
+Version: 1.1.1
 Author: Jason Bobich
 Author URI: http://jasonbobich.com
 License: GPL2
@@ -12,7 +12,7 @@ License: GPL2
 Copyright 2012 JASON BOBICH
 
 This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License, version 2, as 
+it under the terms of the GNU General Public License, version 2, as
 published by the Free Software Foundation.
 
 This program is distributed in the hope that it will be useful,
@@ -25,8 +25,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-define( 'TB_WOOCOMMERCE_PLUGIN_VERSION', '1.1.0' );
-define( 'TB_WOOCOMMERCE_PLUGIN_DIR', dirname( __FILE__ ) ); 
+define( 'TB_WOOCOMMERCE_PLUGIN_VERSION', '1.1.1' );
+define( 'TB_WOOCOMMERCE_PLUGIN_DIR', dirname( __FILE__ ) );
 define( 'TB_WOOCOMMERCE_PLUGIN_URI', plugins_url( '' , __FILE__ ) );
 
 /**
@@ -36,11 +36,11 @@ define( 'TB_WOOCOMMERCE_PLUGIN_URI', plugins_url( '' , __FILE__ ) );
  */
 
 function tb_woocommerce_init(){
-	
+
 	// If no WooCommerce or Theme Blvd framework, get out of here.
 	if( ! defined( 'WOOCOMMERCE_VERSION' ) || ! defined( 'TB_FRAMEWORK_VERSION' ) )
 		return;
-	
+
 	// Remove default WooCommerce wrappers
 	remove_all_actions( 'woocommerce_before_main_content' );
 	remove_all_actions( 'woocommerce_after_main_content' );
@@ -139,9 +139,9 @@ function tb_woocommerce_before_main_content(){
 			<div class="row-fluid grid-protection">
 
 				<?php get_sidebar( 'left' ); ?>
-				
+
 				<!-- CONTENT (start) -->
-	
+
 				<div id="content" class="<?php echo themeblvd_get_column_class('content'); ?> clearfix" role="main">
 					<div class="inner">
 						<?php themeblvd_content_top(); ?>
@@ -162,11 +162,11 @@ function tb_woocommerce_after_main_content(){
 						</div><!-- .article-wrap (end) -->
 					</div><!-- .inner (end) -->
 				</div><!-- #content (end) -->
-					
-				<!-- CONTENT (end) -->	
-				
+
+				<!-- CONTENT (end) -->
+
 				<?php get_sidebar( 'right' ); ?>
-			
+
 			</div><!-- .grid-protection (end) -->
 		</div><!-- .sidebar_layout-inner (end) -->
 	</div><!-- .#sidebar_layout (end) -->
@@ -175,11 +175,11 @@ function tb_woocommerce_after_main_content(){
 
 /**
  * This function determines if the current page is ANY
- * WooCommerce page, including our plugin's "forced" 
- * WooCommerce page option. 
+ * WooCommerce page, including our plugin's "forced"
+ * WooCommerce page option.
  *
- * Note: Using is_woocommerce() does not take into account 
- * all of the assigned pages. 
+ * Note: Using is_woocommerce() does not take into account
+ * all of the assigned pages.
  *
  * @since 1.1.0
  */
@@ -214,10 +214,10 @@ function is_tb_woocommerce(){
  */
 
 function tb_woocommerce_get_sidebar_layout(){
-	
+
 	global $post;
 	$sidebar_layout = '';
-	
+
 	$woo_default = themeblvd_get_option('tb_woocommerce_layout_default');
 	if( ! $woo_default )
 		$woo_default = 'sidebar_right';
@@ -229,11 +229,11 @@ function tb_woocommerce_get_sidebar_layout(){
 	} else if( is_product_category() || is_product_tag() ) {
 		$sidebar_layout = themeblvd_get_option('tb_woocommerce_layout_archive');
 	} else if( is_page() ) {
-		
+
 		// Check the sidebar layout assigned to the static page
 		$page_layout = get_post_meta( $post->ID, '_tb_sidebar_layout', true );
 
-		// And only apply our WooCommerce sidebar layout if the 
+		// And only apply our WooCommerce sidebar layout if the
 		// "default" setting is in place.
 		if( $page_layout == 'default' ) {
 			if( is_checkout () || is_order_received_page() )
@@ -246,7 +246,7 @@ function tb_woocommerce_get_sidebar_layout(){
 			$sidebar_layout = $page_layout;
 		}
 	}
-	
+
 	if( ! $sidebar_layout || $sidebar_layout == 'default' )
 		$sidebar_layout = $woo_default;
 
@@ -254,7 +254,7 @@ function tb_woocommerce_get_sidebar_layout(){
 }
 
 /**
- * Filter sidebar layout of framework for our WooCommerce 
+ * Filter sidebar layout of framework for our WooCommerce
  * sidebar layout.
  *
  * @since 1.0.0
@@ -278,10 +278,10 @@ function tb_woocommerce_sidebar_id( $config ){
 
 	global $post;
 
-	// Re-configure sidebar to be if this is a WooCommerce page. 
+	// Re-configure sidebar to be if this is a WooCommerce page.
 	if( is_tb_woocommerce() ) {
-		
-		// If the user selected a specific sidebar layout 
+
+		// If the user selected a specific sidebar layout
 		// when editing the current page, abort mission.
 		if( is_page() && get_post_meta( $post->ID, '_tb_sidebar_layout', true ) != 'default' )
 			return $config;
@@ -293,7 +293,7 @@ function tb_woocommerce_sidebar_id( $config ){
 		$error = false;
 		if( ! is_active_sidebar( $woo_sidebar_id ) )
 			$error = true;
-		
+
 		// Adjust config
 		$sidebar_layout = tb_woocommerce_get_sidebar_layout();
 		$config['sidebars'][$sidebar_layout] = array(
@@ -301,7 +301,7 @@ function tb_woocommerce_sidebar_id( $config ){
 			'error' => $error
 		);
 	}
-	
+
 	return $config;
 }
 
@@ -326,7 +326,7 @@ function tb_woocommerce_register_sidebar(){
 
 
 /**
- * Add option to select if this is a WooCommerce page when 
+ * Add option to select if this is a WooCommerce page when
  * setting up static pages and inserting WooCommerce shortcodes.
  *
  * @since 1.0.0
@@ -348,7 +348,7 @@ function tb_woocommerce_page_options( $setup ){
 }
 
 /**
- * Add options to theme options page for selecting sidebar 
+ * Add options to theme options page for selecting sidebar
  * layouts for various woocommerce pages.
  *
  * @since 1.1.0
@@ -379,7 +379,7 @@ function tb_woocommerce_options(){
 	}
 
 	$default = array(
-	   'tb_woocommerce_layout_default' => array( 
+	   'tb_woocommerce_layout_default' => array(
 			'name' 		=> __( 'WooCommerce Default', 'tb_woocommerce' ),
 			'desc' 		=> __( 'Select a default fallback sidebar layout for WooCommerce pages.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_default',
@@ -392,7 +392,7 @@ function tb_woocommerce_options(){
 	$sidebar_layouts = array_merge(array('default' => __('WooCommerce Default', 'tb_woocommerce')), $sidebar_layouts );
 
 	$options = array(
-		'tb_woocommerce_layout_shop' => array( 
+		'tb_woocommerce_layout_shop' => array(
 			'name' 		=> __( 'The main shop page', 'tb_woocommerce' ),
 			'desc' 		=> __( 'Select a sidebar layout for the main shop page.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_shop',
@@ -400,7 +400,7 @@ function tb_woocommerce_options(){
 			'type' 		=> 'select',
 			'options' 	=> $sidebar_layouts
 		),
-		'tb_woocommerce_layout_archive' => array( 
+		'tb_woocommerce_layout_archive' => array(
 			'name' 		=> __( 'Product archives', 'tb_woocommerce' ),
 			'desc' 		=> __( 'Select a sidebar layout for product archive pages. For example, this would include viewing a category or tag of products.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_archive',
@@ -408,7 +408,7 @@ function tb_woocommerce_options(){
 			'type' 		=> 'select',
 			'options' 	=> $sidebar_layouts
 		),
-		'tb_woocommerce_layout_single' => array( 
+		'tb_woocommerce_layout_single' => array(
 			'name' 		=> __( 'Single product pages', 'tb_woocommerce' ),
 			'desc' 		=> __( 'Select a sidebar layout for single product pages.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_single',
@@ -416,7 +416,7 @@ function tb_woocommerce_options(){
 			'type' 		=> 'select',
 			'options' 	=> $sidebar_layouts
 		),
-		'tb_woocommerce_layout_cart' => array( 
+		'tb_woocommerce_layout_cart' => array(
 			'name' 		=> __( 'Cart page', 'tb_woocommerce' ),
 			'desc' 		=> __( 'Select a sidebar layout for the shopping cart page.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_cart',
@@ -424,7 +424,7 @@ function tb_woocommerce_options(){
 			'type' 		=> 'select',
 			'options' 	=> $sidebar_layouts
 		),
-		'tb_woocommerce_layout_checkout' => array( 
+		'tb_woocommerce_layout_checkout' => array(
 			'name' 		=> __( 'Checkout pages', 'tb_woocommerce' ),
 			'desc' 		=> __( 'Select a sidebar layout for Checkout Page, Pay Page, and Thanks page.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_checkout',
@@ -432,7 +432,7 @@ function tb_woocommerce_options(){
 			'type' 		=> 'select',
 			'options' 	=> $sidebar_layouts
 		),
-		'tb_woocommerce_layout_account' => array( 
+		'tb_woocommerce_layout_account' => array(
 			'name' 		=> __( 'Customer account pages', 'tb_woocommerce' ),
 			'desc' 		=> __( 'Select a sidebar layout for the customer account pages.', 'tb_woocommerce' ),
 			'id' 		=> 'tb_woocommerce_layout_account',
@@ -443,7 +443,7 @@ function tb_woocommerce_options(){
 	);
 
 	$options = apply_filters('tb_woocommerce_sidebar_layout_options', array_merge($default, $options) );
-	
+
 	$desc = __('Under Appearance > Widgets, you have a specific sidebar for WooCommerce pages called "WooCommerce Sidebar." In this section, you can select sidebar layouts for specific WooCommerce pages that will determine if that sidebar shows on the right, left, or at all.<br /><br />Note: In order for the settings below to be applied for cart, checkout, and customer account pages, you must have their sidebar layouts set to "Default Sidebar Layout" when editing those pages.', 'tb_woocommerce');
 	themeblvd_add_option_section( 'woocommerce', 'sidebar_layouts', 'Sidebar Layouts', $desc, $options );
 
@@ -454,16 +454,16 @@ function tb_woocommerce_options(){
 	if( version_compare(TB_FRAMEWORK_VERSION, '2.2.0', '>=' ) ) {
 
 		$options = array(
-			'tb_woocommerce_breadcrumb_shop' => array( 
+			'tb_woocommerce_breadcrumb_shop' => array(
 				'name' 		=> __( 'Shop link display', 'tb_woocommerce' ),
 				'desc' 		=> __( 'Select the scenarios where you\'d like a link to the main shop page inserted into the Breadcrumb trail.<br /><br />This option won\'t have any effect if you\'ve set your shop page as a static frontpage under <em>Settings > Reading > Frontpage displays</em>.<br /><br />Note: The main shop page is set from <em>WooCommerce > Settings > Pages</em>.', 'tb_woocommerce' ),
 				'id' 		=> 'tb_woocommerce_breadcrumb_shop',
 				'type' 		=> 'multicheck',
 				'std' 		=> array(
-					'archives'	=> true, 
-					'single'	=> true, 
-					'cart'		=> true, 
-					'checkout'	=> true, 
+					'archives'	=> true,
+					'single'	=> true,
+					'cart'		=> true,
+					'checkout'	=> true,
 					'account'	=> true,
 					'forced'	=> true
 				),
@@ -482,11 +482,11 @@ function tb_woocommerce_options(){
 }
 
 /**
- * CSS for WooCommerce and Theme Blvd framework to 
- * sit decently together. 
+ * CSS for WooCommerce and Theme Blvd framework to
+ * sit decently together.
  *
- * The idea here is not to add pretty styles, but 
- * just sort of tame any Bootstrap-related styles 
+ * The idea here is not to add pretty styles, but
+ * just sort of tame any Bootstrap-related styles
  * before getting to the woo-commerce stylesheet.
  *
  * @since 1.1.0
@@ -497,11 +497,11 @@ function tb_woocommerce_styles() {
 }
 
 /**
- * Hide breadcrumbs on main shop page when it's set 
+ * Hide breadcrumbs on main shop page when it's set
  * as a static frontpage.
  *
- * This is needed because WooCommerce takes over the main 
- * query. So, our standard option on that page for hiding 
+ * This is needed because WooCommerce takes over the main
+ * query. So, our standard option on that page for hiding
  * breadcrumbs won't work, as it's no longer "the page".
  *
  * @since 1.1.0
@@ -513,14 +513,14 @@ function tb_woocommerce_hide_frontpage_breadcrumbs() {
 }
 
 /**
- * Add breacrumb parts to Theme Blvd breadcrumbs 
+ * Add breacrumb parts to Theme Blvd breadcrumbs
  * based on WooCommerce pages.
  *
  * @since 1.1.0
  */
 
 function tb_woocommerce_breadcrumb_parts( $parts ) {
-	
+
 	global $post;
 	global $wp_query;
 
@@ -552,11 +552,11 @@ function tb_woocommerce_breadcrumb_parts( $parts ) {
 
 	// Shop page, product archives, and single products
 	if( is_woocommerce() ) {
-		
+
 		$parts = array(); // Reset $parts
 
 		if( is_product_category() ) {
-			
+
 			if( $show_shop_link['archives'] )
 				$parts[] = $shop_link;
 
@@ -590,7 +590,7 @@ function tb_woocommerce_breadcrumb_parts( $parts ) {
 			);
 
 		} else if( is_product_tag() ) {
-			
+
 			if( $show_shop_link['archives'] )
 				$parts[] = $shop_link;
 
@@ -659,7 +659,7 @@ function tb_woocommerce_breadcrumb_parts( $parts ) {
 				'text' 	=> get_the_title(),
 				'type'	=> 'product'
 			);
-		}		
+		}
 	}
 
 	// Cart, checkout, account, and forced WooCommerce pages
@@ -681,8 +681,8 @@ function tb_woocommerce_breadcrumb_parts( $parts ) {
 				$new_parts[] = $shop_link;
 		}
 
-		// Merge shop link to original parts. No need to re-do 
-		// the work for figuring Pages breadcrumb trail again 
+		// Merge shop link to original parts. No need to re-do
+		// the work for figuring Pages breadcrumb trail again
 		// when the framework already did it.
 		$parts = array_merge( $new_parts, $parts );
 	}

@@ -668,29 +668,27 @@ function tb_woocommerce_breadcrumb_parts( $parts ) {
 		// Shop link added before page hierarchy
 		$new_parts = array();
 		if( is_checkout() || is_order_received_page() ) {
-			if( $show_shop_link['checkout'] )
+			if( $show_shop_link['checkout'] ) {
 				$new_parts[] = $shop_link;
+			}
 		} else if( is_cart() ) {
-			if( $show_shop_link['cart'] )
+			if( $show_shop_link['cart'] ) {
 				$new_parts[] = $shop_link;
+			}
 		} else if( is_account_page() ) {
-			if( $show_shop_link['account'] )
+			if( $show_shop_link['account'] ) {
 				$new_parts[] = $shop_link;
+			}
 		} else {
-			if( $show_shop_link['forced'] )
+			if( $show_shop_link['forced'] ) {
 				$new_parts[] = $shop_link;
+			}
 		}
 
 		// Merge shop link to original parts. No need to re-do
 		// the work for figuring Pages breadcrumb trail again
 		// when the framework already did it.
 		$parts = array_merge( $new_parts, $parts );
-	}
-
-	// Add page number if is paged
-	if( get_query_var('paged') ) {
-		$last = count($parts) - 1;
-		$parts[$last]['text'] .= ' ('.themeblvd_get_local('page').' '.get_query_var('paged').')';
 	}
 
 	return $parts;

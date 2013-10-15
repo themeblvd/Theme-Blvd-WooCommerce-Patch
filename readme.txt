@@ -40,6 +40,8 @@ After installing, you'll have a new panel of options added at *Appearance > Them
 
 = 1.1.1 =
 
+* Fixed breadcrumbs bug on product pages using pagination.
+
 = 1.1.0 =
 
 * Added overall compatibility for Theme Blvd framework v2.2+.
